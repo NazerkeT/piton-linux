@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# Cohort MMU device configuration
+#
+
+config COHORT_MMU
+    bool "COHORT MMU"
+    default y
+    ---help---
+        Instantiate Cohort MMU device and driver 
+

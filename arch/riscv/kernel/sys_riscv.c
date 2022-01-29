@@ -66,8 +66,18 @@ SYSCALL_DEFINE3(riscv_flush_icache, uintptr_t, start, uintptr_t, end,
 	return 0;
 }
 
-SYSCALL_DEFINE0(riscv_conf_iommu) {
-    uint64_t base = (uint64_t)(current->mm->pgd);
+SYSCALL_DEFINE1(riscv_conf_iommu, uintptr_t, base_addr) {
+    // save page table base address
+	base_addr = (uint64_t)(current->mm->pgd);
     printk("PT base address %p\n", current->mm->pgd);
-    return base;
+
+	// call a driver for the curr proc
+	struct mm_struct *mm; 
+
+	mm = get_task_mm(current);
+
+	// --> Is this a pointer being passed or a whole structure btw?
+	cohort_mn_register(mm);
+
+    return 0;
 }
