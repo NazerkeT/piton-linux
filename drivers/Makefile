@@ -58,7 +58,7 @@ obj-y				+= char/
 # iommu/ comes before gpu as gpu are using iommu controllers
 obj-y				+= iommu/
 
-# obj-y				+= cohort_mmu/
+obj-y				+= cohort_mmu/
 
 # gpu/ comes after char for AGP vs DRM startup and after iommu
 obj-y				+= gpu/
