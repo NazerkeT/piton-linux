@@ -8,6 +8,8 @@
 #include <linux/syscalls.h>
 #include <asm/unistd.h>
 #include <asm/cacheflush.h>
+#include <linux/sched/mm.h>
+#include "../drivers/cohort_mmu/cohort_mmu.h"
 
 static long riscv_sys_mmap(unsigned long addr, unsigned long len,
 			   unsigned long prot, unsigned long flags,
@@ -66,6 +68,7 @@ SYSCALL_DEFINE3(riscv_flush_icache, uintptr_t, start, uintptr_t, end,
 	return 0;
 }
 
+#ifdef CONFIG_COHORT_MMU
 SYSCALL_DEFINE1(riscv_conf_iommu, uintptr_t, base_addr) {
     // save page table base address
 	base_addr = (uint64_t)(current->mm->pgd);
@@ -81,3 +84,4 @@ SYSCALL_DEFINE1(riscv_conf_iommu, uintptr_t, base_addr) {
 
     return 0;
 }
+#endif

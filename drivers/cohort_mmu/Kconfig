@@ -6,6 +6,7 @@
 config COHORT_MMU
     bool "COHORT MMU"
     default y
+    select MMU_NOTIFIER
     ---help---
         Instantiate Cohort MMU device and driver 
 

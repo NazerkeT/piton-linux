@@ -18,11 +18,15 @@
 
 #include <linux/mmu_notifier.h>
 #include <linux/amd-iommu.h>
+#include <linux/platform_device.h>
+#include <linux/mod_devicetable.h>
+
 #include <linux/mm_types.h>
 #include <linux/profile.h>
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/sched/mm.h>
+#include <linux/mmu_notifier.h>
 #include <linux/iommu.h>
 #include <linux/wait.h>
 #include <linux/pci.h>
@@ -38,29 +42,54 @@ MODULE_AUTHOR("Nazerke Turtayeva <nturtayeva@ucsb.edu>");
 
 #define DRIVER_NAME "cohort_mmu"
 
+// GET PAGE FAULTS
+uint64_t dec_get_tlb_fault(uint64_t tile) {
+  uint64_t res = *(volatile uint64_t *)(get_tlb_fault | mmub);
+  return res;
+}
+
+// FLUSH TLB
+void dec_flush_tlb (struct mmu_notifier *mn,
+				                            struct mm_struct *mm,
+				                            unsigned long start, unsigned long end) {
+   *(volatile uint64_t*)(tlb_flush | mmub);
+   
+}
+
+// RESOLVE PAGE FAULT, but not load entry into TLB, let PTW do it
+void dec_resolve_page_fault(uint64_t tile) {
+  // followed by maple, treat_int()
+  uint64_t res = dec_get_tlb_fault(0);
+  uint64_t conf_tlb_entry = res & 0xF;
+
+  *(volatile uint64_t*)(resolve_tlb_fault | mmub) = conf_tlb_entry; 
+}
+
 static int irq;
 
-static struct mm_struct curr_mm;
-
-static struct mmu_notifier mn; 
+static struct mm_struct *curr_mm;
 
 static const struct mmu_notifier_ops iommu_mn = {
 	// maple API is used
-	.invalidate_range       = dec_flush_tlb(COHORT_TILE);
+	.invalidate_range       = dec_flush_tlb,
 };
+
+static struct mmu_notifier mn = {
+	.ops = &iommu_mn,
+}; 
 
 static irqreturn_t cohort_mmu_interrupt(int irq, void *dev_id){
 	// maple API is used
 	dec_resolve_page_fault(COHORT_TILE);
 
 	return IRQ_HANDLED;
-}
+};
 
-static void cohort_mn_register(struct mm_struct *mm){
-	curr_mm = &mm;
-	mn.ops  = &iommu_mn;
+void cohort_mn_register(struct mm_struct *mm){
+	curr_mm = mm;
+	mn.mm = mm;
 
-	mmu_notifier_register(&mn, mm);
+	mmu_notifier_register(&mn, curr_mm);
 
 }
 EXPORT_SYMBOL(cohort_mn_register);
@@ -79,7 +108,7 @@ static int cohort_mmu_probe(struct platform_device *ofdev)
 	if (!res) {
 		pr_info("no IRQ found\n");
 		dev_err(dev, "no IRQ found\n");
-		return;
+		return -1;
 	}
 
 	irq = res->start;
@@ -95,7 +124,7 @@ static int cohort_mmu_probe(struct platform_device *ofdev)
 }
 
 static int cohort_mmu_remove(struct platform_device *ofdev){
-	mmu_notifier_unregister(&iommu_mn, *curr_mm);
+	mmu_notifier_unregister(&mn, curr_mm);
 
 	struct device *dev = &ofdev->dev;
 	free_irq(irq, dev);
