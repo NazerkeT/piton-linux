@@ -96,13 +96,15 @@ EXPORT_SYMBOL(cohort_mn_register);
 
 static int cohort_mmu_probe(struct platform_device *ofdev)
 {	
-	pr_info("Cohort MMU Driver Probe\n");
+	pr_info("Cohort MMU Driver Probe, v1.0\n");
 
 	int retval;
 
 	struct device *dev = &ofdev->dev;
 	
-	pr_info("Cohort Device info(1):%s\n", (*(*dev).init_name));
+	// pr_info("Cohort Device info(1):%s\n", dev->init_name);
+	pr_info("Cohort Device info(1):\n");
+
 
 	/* Get IRQ for the device */
 	struct resource *res;
@@ -113,12 +115,13 @@ static int cohort_mmu_probe(struct platform_device *ofdev)
 		return -1;
 	}
 
-	pr_info("Cohort IRQ:%s\n", (*(*res).name));
+	// pr_info("Cohort IRQ:%s\n", res->name);
+	pr_info("Cohort IRQ:\n");
 
 	irq = res->start;
 
 	// listen for interrupts for a page fault
-	retval = request_irq(irq, cohort_mmu_interrupt, 0, "coh-mmu", dev);
+	retval = request_irq(irq, cohort_mmu_interrupt, 0, dev_name(dev), dev);
 
 	if (retval)
 		pr_err("Can't request irq\n");
@@ -138,7 +141,8 @@ static int cohort_mmu_remove(struct platform_device *ofdev){
 	pr_info("Cohort MMU Unregistered\n");
 
 	struct device *dev = &ofdev->dev;
-	pr_info("Cohort Device info(2):%s\n", (*(*dev).init_name));
+	// pr_info("Cohort Device info(2):%s\n", dev->init_name);
+	pr_info("Cohort Device info(2):\n");
 	free_irq(irq, dev);
 
 	pr_info("Cohort MMU IRQ freed and leaving!\n");
