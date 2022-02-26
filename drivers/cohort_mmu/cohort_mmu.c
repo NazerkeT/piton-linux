@@ -122,9 +122,11 @@ static int cohort_mmu_probe(struct platform_device *ofdev)
 
 	// listen for interrupts for a page fault
 	retval = request_irq(irq, cohort_mmu_interrupt, 0, dev_name(dev), dev);
+	
+	pr_info("Cohort IRQ Return Value: %d", retval);
 
 	if (retval)
-		pr_err("Can't request irq\n");
+		dev_err(dev, "Can't request irq\n");
 		return -1;
 
 	pr_info("Cohort Probe is successfully launched!\n");
