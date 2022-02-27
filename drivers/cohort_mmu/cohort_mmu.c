@@ -96,40 +96,36 @@ EXPORT_SYMBOL(cohort_mn_register);
 
 static int cohort_mmu_probe(struct platform_device *ofdev)
 {	
-	pr_info("Cohort MMU Driver Probe, v1.0\n");
-
-	int retval;
+	pr_info("Cohort MMU Driver Probe v1.7 entered!\n");
 
 	struct device *dev = &ofdev->dev;
 	
-	// pr_info("Cohort Device info(1):%s\n", dev->init_name);
-	pr_info("Cohort Device info(1):\n");
-
+	dev_info(dev, "Cohort Device Structure extracted!\n");
 
 	/* Get IRQ for the device */
 	struct resource *res;
 	res = platform_get_resource(ofdev, IORESOURCE_IRQ, 0);
 	if (!res) {
-		pr_info("no IRQ found\n");
 		dev_err(dev, "no IRQ found\n");
 		return -1;
 	}
 
-	// pr_info("Cohort IRQ:%s\n", res->name);
-	pr_info("Cohort IRQ:\n");
+	dev_info(dev, "Cohort IRQ res name: %s\n", res->name);
 
 	irq = res->start;
 
 	// listen for interrupts for a page fault
+	int retval;
 	retval = request_irq(irq, cohort_mmu_interrupt, 0, dev_name(dev), dev);
-	
-	pr_info("Cohort IRQ Return Value: %d", retval);
 
-	if (retval)
-		dev_err(dev, "Can't request irq\n");
-		return -1;
+	dev_info(dev, "Cohort IRQ return value: %d", retval);
 
-	pr_info("Cohort Probe is successfully launched!\n");
+	if (retval < 0){
+		dev_err(dev, "Can't request IRQ with retval: %d\n", retval);
+		return retval;
+	}
+
+	dev_info(dev, "Cohort Probe is successfully launched!\n");
 
 	return 0;
 
