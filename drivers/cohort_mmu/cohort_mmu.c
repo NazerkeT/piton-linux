@@ -86,10 +86,14 @@ static irqreturn_t cohort_mmu_interrupt(int irq, void *dev_id){
 };
 
 void cohort_mn_register(struct mm_struct *mm){
+	printk("Cohort MMU register fun entered! \n");
+
 	curr_mm = mm;
 	mn.mm = mm;
 
+	printk("Cohort MMU: register fun called! \n");
 	mmu_notifier_register(&mn, curr_mm);
+	printk("Cohort MMU: register fun returned! \n");
 
 }
 EXPORT_SYMBOL(cohort_mn_register);
